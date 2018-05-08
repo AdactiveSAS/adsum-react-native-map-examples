@@ -28,3 +28,7 @@ build/Release
 node_modules
 
 \.idea/
+
+# Ignore generated files
+/*/ios/assets/adsum/
+/*/android/app/src/main/assets/adsum/

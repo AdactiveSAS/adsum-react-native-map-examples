@@ -1,58 +1,48 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
+import React from 'react';
+import { StyleSheet, WebView } from 'react-native';
+import { AdsumNativeMap } from '@adactive/adsum-react-native-map';
+import { EntityManager } from '@adactive/adsum-client-api';
 
-import React, { Component } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
+export default class App extends React.Component {
+    componentWillMount() {
+        // Create an entityManager using the API credentials (see AdsumClientAPI documentation for more details)
+        this.entityManager = new EntityManager({
+            "endpoint": "https://api.adsum.io",
+            "site": 322,
+            "username": "323-device",
+            "key": "343169bf805f8abd5fa71a4f529594a654de6afbac70a2d867a8b458c526fb7d"
+        });
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' +
-    'Cmd+D or shake for dev menu',
-  android: 'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+        // Create the Map instance
+        this.adsumRnMap = new AdsumNativeMap({});
 
-type Props = {};
-export default class App extends Component<Props> {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit App.js
-        </Text>
-        <Text style={styles.instructions}>
-          {instructions}
-        </Text>
-      </View>
-    );
-  }
+        this.start();
+    }
+
+    async start() {
+        // Init the Map
+        await this.adsumRnMap.init({
+            entityManager: this.entityManager,
+            deviceId: 323,
+        });
+
+        // Start the rendering
+        await this.adsumRnMap.start();
+    }
+
+    render() {
+        // Render your map inside the Webview
+
+        return (
+            // Don't forget to add specific props to your WebView in order to let the map bind to it
+            <WebView style={styles.webview} {...this.adsumRnMap.getWebViewProps()}>
+            </WebView>
+        );
+    }
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
+    webview: {
+        flex: 1,
+    },
 });
