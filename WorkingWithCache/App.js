@@ -5,7 +5,7 @@ import {EntityManager, LocalCacheManager} from '@adactive/adsum-client-api';
 import {AdsumNativeMap} from '@adactive/adsum-react-native-map';
 
 const STATUS = {
-    INITIAL: 'inital',
+    INITIAL: 'initial',
     DOWNLOADING: 'downloading',
     LOADING: 'loading',
     RUNNING: 'running'
@@ -19,7 +19,10 @@ export default class App extends React.Component {
             status: STATUS.INITIAL,
         };
 
+        // Create the cacheManager
         this.cacheManager = new LocalCacheManager(`${RNFS.DocumentDirectoryPath}/my-cache-location`);
+
+        // Create the entityManager
         this.entityManager = new EntityManager({
             site: 322,
             endpoint: "https://api.adsum.io",
@@ -27,9 +30,14 @@ export default class App extends React.Component {
             key: "343169bf805f8abd5fa71a4f529594a654de6afbac70a2d867a8b458c526fb7d",
             cacheManager: this.cacheManager
         });
+
+        // Create the Map
         this.adsumRnMap = new AdsumNativeMap({});
     }
 
+    /**
+     * Try to downloads the data
+     */
     async synchronize() {
         this.setState({ status: STATUS.DOWNLOADING });
 
@@ -43,12 +51,15 @@ export default class App extends React.Component {
                 }
             );
         } catch(e) {
-            console.error(e);
+            console.warn(e);
         }
 
         this.setState({ status: STATUS.INITIAL });
     }
 
+    /**
+     * Starts
+     */
     async start() {
         this.setState({ status: STATUS.LOADING });
 
