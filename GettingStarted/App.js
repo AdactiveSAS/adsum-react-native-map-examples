@@ -4,6 +4,14 @@ import { AdsumNativeMap } from '@adactive/adsum-react-native-map';
 import { EntityManager } from '@adactive/adsum-client-api';
 
 export default class App extends React.Component {
+    constructor() {
+        super();
+
+        this.state = {
+            ready: false,
+        };
+    }
+
     componentWillMount() {
         // Create an entityManager using the API credentials (see AdsumClientAPI documentation for more details)
         this.entityManager = new EntityManager({
@@ -28,6 +36,8 @@ export default class App extends React.Component {
 
         // Start the rendering
         await this.adsumRnMap.start();
+
+        this.setState({ ready: true });
     }
 
     render() {
