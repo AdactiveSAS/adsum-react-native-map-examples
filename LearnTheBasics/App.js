@@ -117,7 +117,7 @@ export default class App extends React.Component {
         if (this.state.ready) {
             // Add btn only if the map is ready
             btn = (<Button
-                onPress={this.toggleFloorsIOS()}
+                onPress={this.toggleFloorsIOS.bind(this)}
                 style={styles.titleText}
                 title="Change floor"
             />);
