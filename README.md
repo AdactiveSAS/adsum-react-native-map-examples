@@ -1,1 +1,1 @@
-adsum-react-native-map-examples
+This repository contains examples used in [adsum-react-native-map doc](https://adactivesas.github.io)
