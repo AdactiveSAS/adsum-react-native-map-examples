@@ -26,3 +26,11 @@ build/Release
 # Dependency directory
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
 node_modules
+
+\.idea/
+
+.npmrc
+
+# Ignore generated files
+/*/ios/assets/adsum/
+/*/android/app/src/main/assets/adsum/
