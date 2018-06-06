@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, WebView, View, Text } from 'react-native';
+import { StyleSheet, WebView, View, Text, ScrollView } from 'react-native';
 import { AdsumNativeMap, MOUSE_EVENTS } from '@adactive/adsum-react-native-map';
 import { EntityManager } from '@adactive/adsum-client-api';
 
@@ -56,6 +56,10 @@ export default class App extends React.Component {
 
         const place = await this.getPlaceFromAdsumObject(intersects[0].object);
 
+        if (place === null) {
+            this.setState({text: 'Empty'});
+        }
+
         this.setState({text: JSON.stringify(place, null, 2)});
     }
 
@@ -73,9 +77,11 @@ export default class App extends React.Component {
             <View style={styles.container}>
                 <WebView style={styles.webview} {...this.adsumRnMap.getWebViewProps()}>
                 </WebView>
-                <Text style={styles.text}>
-                    {this.state.text}
-                </Text>
+                <ScrollView style={styles.inspect}>
+                    <Text>
+                        {this.state.text}
+                    </Text>
+                </ScrollView>
             </View>
         );
     }
@@ -89,7 +95,7 @@ const styles = StyleSheet.create({
     webview: {
         flex: 2,
     },
-    text: {
+    inspect: {
         flex: 1
     }
 });

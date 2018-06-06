@@ -1,4 +1,0 @@
-#Fri May 25 17:39:33 SGT 2018
-base.0=/home/moroine/Workspace/adsum-react-native-map-examples/CoupleClientAndMap/android/app/build/intermediates/transforms/dexMerger/debug/5
-path.0=classes.dex
-renamed.0=classes.dex
