@@ -16,6 +16,8 @@ export default class App extends React.Component {
             current: null,
         };
 
+        this.floorTitles = new Map();
+
         this.currentPath = null;
     }
 
@@ -43,6 +45,16 @@ export default class App extends React.Component {
 
         // Start the rendering
         await this.adsumRnMap.start();
+
+        const floors = Array.from(this.adsumRnMap.objectManager.floors.values());
+        await Promise.all(
+            floors.map(async (floor) => {
+                const floorName = await floor.getName();
+                const building = await floor.getBuilding();
+                const buildingName = await building.getName();
+                this.floorTitles.set(floor, `${buildingName}-${floorName}`);
+            }),
+        );
 
         this.setState({ready: true});
 
@@ -95,7 +107,7 @@ export default class App extends React.Component {
 
             // For each floor add the action
             this.adsumRnMap.objectManager.floors.forEach((floor, id) => {
-                actions.push({title: `Set floor: ${id}`});
+                actions.push({title: this.floorTitles.get(floor) });
                 floors.push(floor);
             });
         }
@@ -218,6 +230,8 @@ export default class App extends React.Component {
             await this.resetBuilding(this.selection.current);
         } else if (this.selection.current !== null && this.selection.current.isSpace) {
             await this.resetSpace(this.selection.current);
+        } else if (this.selection.current !== null && this.selection.current.isLabel) {
+            await this.resetLabel(this.selection.current);
         }
 
         this.selection.current = object;
@@ -237,20 +251,30 @@ export default class App extends React.Component {
         await this.adsumRnMap.cameraManager.centerOn(building);
 
         await building.setColor(0x78e08f);
+        const labels = await building.getLabels();
+        await Promise.all(labels.map(labelObject => labelObject.select()));
     }
 
     async resetBuilding(building) {
         await building.resetColor();
+
+        const labels = await building.getLabels();
+        await Promise.all(labels.map(labelObject => labelObject.unselect()));
     }
 
     async highlightSpace(space) {
         await this.adsumRnMap.cameraManager.centerOn(space);
         await space.setColor(0x78e08f);
         await space.bounceUp(3);
+
+        const labels = await space.getLabels();
+        await Promise.all(labels.map(labelObject => labelObject.select()));
+
         await this.goTo(space);
     }
 
     async highlightLabel(label) {
+        await label.select();
         await this.adsumRnMap.cameraManager.centerOn(label);
         await this.goTo(space);
     }
@@ -258,6 +282,13 @@ export default class App extends React.Component {
     async resetSpace(space) {
         await space.resetColor();
         await space.bounceDown();
+
+        const labels = await space.getLabels();
+        await Promise.all(labels.map(labelObject => labelObject.unselect()));
+    }
+
+    async resetLabel(label) {
+        return label.unselect();
     }
 
     async goTo(object) {
@@ -276,17 +307,34 @@ export default class App extends React.Component {
         // Compute the path to find the shortest path
         await this.adsumRnMap.wayfindingManager.computePath(this.currentPath);
 
-        for(const pathSection of this.currentPath.pathSections) {
+        for(const pathSection of this.currentPath.getPathSections()) {
             // Do the floor change
             await this.changeFloor(pathSection.ground.isFloor ? pathSection.ground : null);
 
             // Draw the step
             await this.adsumRnMap.wayfindingManager.drawPathSection(pathSection);
 
+            // Find any attached labelObjects to the pathSection destination
+            let labelObjects = [];
+            let adsumObject = await this.adsumRnMap.objectManager.getByAdsumLocation(pathSection.to);
+            if (adsumObject !== null) {
+                if (adsumObject.isLabel) {
+                    labelObjects = [adsumObject];
+                } else if (adsumObject.isBuilding || adsumObject.isSpace) {
+                    labelObjects = await adsumObject.getLabels();
+                }
+            }
+
+            // Select label objects
+            await Promise.all(labelObjects.map(labelObject => labelObject.select()));
+
             // Add a delay of 1.5 seconds
             await new Promise((resolve) => {
                 setTimeout(resolve, 1500);
             });
+
+            // unselect label objects
+            await Promise.all(labelObjects.map(labelObject => labelObject.unselect()));
         }
     }
 }
