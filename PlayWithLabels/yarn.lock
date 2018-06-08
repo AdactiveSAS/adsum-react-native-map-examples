@@ -25,8 +25,8 @@
     eventemitter3 "^3.0.1"
 
 "@adactive/adsum-react-native-map@^5.2.0-rc.16":
-  version "5.2.0-rc.16"
-  resolved "https://registry.yarnpkg.com/@adactive/adsum-react-native-map/-/adsum-react-native-map-5.2.0-rc.16.tgz#9782fed1dff407d6d7b89bcb54f1e24a38e3026a"
+  version "5.2.0-rc.17"
+  resolved "https://registry.yarnpkg.com/@adactive/adsum-react-native-map/-/adsum-react-native-map-5.2.0-rc.17.tgz#d2196c485640af48e0948a09382522680131f591"
   dependencies:
     "@adactive/adactive-abstract-options" "^1.0.2"
     "@adactive/adactive-event-dispatcher" "^1.0.1"
@@ -1372,8 +1372,8 @@ bcrypt-pbkdf@^1.0.0:
     tweetnacl "^0.14.3"
 
 big-integer@^1.6.7:
-  version "1.6.30"
-  resolved "https://registry.yarnpkg.com/big-integer/-/big-integer-1.6.30.tgz#7796f04acdd6ba56345f19049c8fffd427f09d16"
+  version "1.6.31"
+  resolved "https://registry.yarnpkg.com/big-integer/-/big-integer-1.6.31.tgz#6d7852486e67c642502dcc03f7225a245c9fc7fa"
 
 bplist-creator@0.0.7:
   version "0.0.7"
@@ -4255,6 +4255,10 @@ react-native-slider@^0.11.0:
 react-native-static-server@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/react-native-static-server/-/react-native-static-server-0.3.0.tgz#19cbe5156942992f0a123d00d4950978f15c0f16"
+
+react-native-table-component@^1.1.8:
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/react-native-table-component/-/react-native-table-component-1.1.8.tgz#4d0846d077914e1c608769e55a1a9e76ea32a90f"
 
 react-native@0.55.4:
   version "0.55.4"

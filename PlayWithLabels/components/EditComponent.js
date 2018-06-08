@@ -23,6 +23,11 @@ const styles = StyleSheet.create({
     },
 });
 
+/**
+ * All the input types
+ *
+ * @type {{bool: string, number: string, color: string, select: string, text: string}}
+ */
 const INPUT_TYPES = {
     bool: 'bool',
     number: 'number',
@@ -32,38 +37,59 @@ const INPUT_TYPES = {
 };
 
 export default class EditComponent extends React.Component {
-    constructor(props) {
-        super(props);
-
-        this.style = props.style;
-
-        this.initState();
-    }
-
     state = {
+        /**
+         * The form data
+         *
+         * @type {object[]}
+         */
         form: [],
+        /**
+         * The color picker data
+         *
+         * @type {?{value: string, onChange: function}}
+         */
         colorPicker: null,
     };
 
-    style = null;
+    componentDidMount() {
+        // Create the form
+        this.createForm();
+    }
 
-    async initState() {
+    UNSAFE_componentWillReceiveProps() {
+        // Update the form
+        this.createForm();
+    }
+
+    /**
+     * Create the form according to labelObject props
+     *
+     * @return {Promise<void>}
+     */
+    async createForm() {
+        // Get some labelObject values
         const offset = await this.props.labelObject.getOffset();
         const scale = await this.props.labelObject.getScale();
-
         const orientationMode = await this.props.labelObject.getOrientationMode();
         const isAutoScale = await this.props.labelObject.isAutoScale();
 
+        // Create the form
         const form = [
             {
-                name: 'isAutoScale',
-                value: isAutoScale,
-                type: INPUT_TYPES.bool,
-                disabled: false,
-                onChange: async (value) => {
-                    this.refreshInput('isAutoScale', value);
-                    await this.props.labelObject.setAutoScale(value);
+                name: 'isAutoScale', // Property name
+                value: isAutoScale, // Property value
+                type: INPUT_TYPES.bool, // Property type
+                disabled: false, // We want the input to be displayed
+                onChange: async (value) => { // On change callback
+                    this.refreshInput('isAutoScale', value); // Update the input
+                    await this.props.labelObject.setAutoScale(value); // Update the label
 
+                    /**
+                     * Special case for autoScale
+                     * When autoScale is enabled, then you cannot edit anymore the scale manually
+                     * And when it's enabled back, we need to update the scale property because it may has been changed
+                     */
                     if (value) {
                         this.disableInput('scaleX');
                         this.disableInput('scaleY');
@@ -94,12 +120,17 @@ export default class EditComponent extends React.Component {
                 choices: [LABEL_ORIENTATION_MODES.BILLBOARD, LABEL_ORIENTATION_MODES.STATIC],
                 onChange: async (value) => {
                     this.refreshInput('orientationMode', value);
+                    await this.props.labelObject.setOrientationMode(value);
+
+                    /**
+                     * Special case rotation is only available for static mode
+                     * Here no need to update the rotation as it hasn't been changed
+                     */
                     if (value === LABEL_ORIENTATION_MODES.STATIC) {
                         this.enableInput('rotation');
                     } else {
                         this.disableInput('rotation');
                     }
-                    await this.props.labelObject.setOrientationMode(value);
                 }
             },
             {
@@ -158,7 +189,7 @@ export default class EditComponent extends React.Component {
                 name: 'scaleX',
                 value: scale.x,
                 type: INPUT_TYPES.number,
-                disabled: isAutoScale,
+                disabled: isAutoScale, // Disable if it's autoScaling
                 onChange: async (value) => {
                     this.refreshInput('scaleX', value);
                     const v = parseFloat(value);
@@ -171,7 +202,7 @@ export default class EditComponent extends React.Component {
                 name: 'scaleY',
                 value: scale.y,
                 type: INPUT_TYPES.number,
-                disabled: isAutoScale,
+                disabled: isAutoScale, // Disable if it's autoScaling
                 onChange: async (value) => {
                     this.refreshInput('scaleY', value);
                     const v = parseFloat(value);
@@ -184,7 +215,7 @@ export default class EditComponent extends React.Component {
                 name: 'scaleZ',
                 value: scale.z,
                 type: INPUT_TYPES.number,
-                disabled: isAutoScale,
+                disabled: isAutoScale, // Disable if it's autoScaling
                 onChange: async (value) => {
                     this.refreshInput('scaleZ', value);
                     const v = parseFloat(value);
@@ -197,7 +228,7 @@ export default class EditComponent extends React.Component {
                 name: 'rotation',
                 value: await this.props.labelObject.getRotation(),
                 type: INPUT_TYPES.number,
-                disabled: orientationMode !== LABEL_ORIENTATION_MODES.STATIC,
+                disabled: orientationMode !== LABEL_ORIENTATION_MODES.STATIC, // Disable if it's STATIC
                 onChange: async (value) => {
                     this.refreshInput('rotation', value);
                     const v = parseFloat(value);
@@ -208,6 +239,9 @@ export default class EditComponent extends React.Component {
             },
         ];
 
+        /**
+         * Properties only for LabelImage
+         */
         if (this.props.labelObject.isLabelImage) {
             form.push({
                 name: 'height',
@@ -237,12 +271,15 @@ export default class EditComponent extends React.Component {
             });
         }
 
+        /**
+         * Properties only for LabelText
+         */
         if (this.props.labelObject.isLabelText) {
             form.push({
                 name: 'text',
                 value: await this.props.labelObject.getText(),
                 type: INPUT_TYPES.text,
-                multiline: true,
+                multiline: true, // text can be multilines
                 disabled: false,
                 onChange: async (value) => {
                     this.refreshInput('text', value);
@@ -291,7 +328,7 @@ export default class EditComponent extends React.Component {
 
             form.push({
                 name: 'hasBackground',
-                value: style.backgroundColor !== null,
+                value: style.backgroundColor !== null, // This is not a property but more a derived one when backgroundColor is null
                 type: INPUT_TYPES.bool,
                 disabled: false,
                 onChange: async (value) => {
@@ -325,7 +362,7 @@ export default class EditComponent extends React.Component {
                 name: 'backgroundOpacity',
                 value: style.backgroundOpacity,
                 type: INPUT_TYPES.number,
-                disabled: false,
+                disabled: style.backgroundColor === null,
                 onChange: async (value) => {
                     this.refreshInput('backgroundOpacity', value);
                     const v = parseFloat(value);
@@ -334,11 +371,12 @@ export default class EditComponent extends React.Component {
                     }
                 }
             });
+
             form.push({
                 name: 'backgroundRadius',
                 value: style.backgroundRadius,
                 type: INPUT_TYPES.number,
-                disabled: false,
+                disabled: style.backgroundColor === null,
                 onChange: async (value) => {
                     this.refreshInput('backgroundRadius', value);
                     const v = parseFloat(value);
@@ -352,10 +390,12 @@ export default class EditComponent extends React.Component {
         this.setState({form});
     }
 
-    UNSAFE_componentWillReceiveProps() {
-        this.initState();
-    }
-
+    /**
+     * Set an input value and make sure it's not disabled
+     *
+     * @param {string} name
+     * @param {*} value
+     */
     refreshInput(name, value) {
         const form = [...this.state.form];
 
@@ -369,6 +409,11 @@ export default class EditComponent extends React.Component {
         this.setState({form});
     }
 
+    /**
+     * Enable an input
+     *
+     * @param {string} name
+     */
     enableInput(name) {
         const form = [...this.state.form];
 
@@ -381,6 +426,11 @@ export default class EditComponent extends React.Component {
         this.setState({form});
     }
 
+    /**
+     * Disable an input
+     *
+     * @param {string} name
+     */
     disableInput(name) {
         const form = [...this.state.form];
 
@@ -393,6 +443,11 @@ export default class EditComponent extends React.Component {
         this.setState({form});
     }
 
+    /**
+     * Render the form
+     *
+     * @return {React.Component}
+     */
     renderForm() {
         return (
             <ScrollView>
@@ -401,6 +456,12 @@ export default class EditComponent extends React.Component {
         );
     }
 
+    /**
+     * Render the form input
+     *
+     * @param {object} data
+     * @return {void|React.Component}
+     */
     renderInput(data) {
         if (data.disabled) {
             return;
@@ -420,6 +481,12 @@ export default class EditComponent extends React.Component {
         }
     }
 
+    /**
+     * Render boolean input
+     *
+     * @param {object} data
+     * @return {React.Component}
+     */
     renderBoolInput({name, value, onChange}) {
         return (
             <View key={name} style={styles.inputRow}>
@@ -429,6 +496,12 @@ export default class EditComponent extends React.Component {
         );
     }
 
+    /**
+     * Render text input
+     *
+     * @param {object} data
+     * @return {React.Component}
+     */
     renderTextInput({name, onChange, value, multiline}) {
         const numberOfLines = value.split('\n').length;
         return (
@@ -439,6 +512,12 @@ export default class EditComponent extends React.Component {
         );
     }
 
+    /**
+     * Render number input
+     *
+     * @param {object} data
+     * @return {React.Component}
+     */
     renderNumberInput({name, onChange, value}) {
         return (
             <View key={name} style={styles.inputRow}>
@@ -448,6 +527,12 @@ export default class EditComponent extends React.Component {
         );
     }
 
+    /**
+     * Render select input
+     *
+     * @param {object} data
+     * @return {React.Component}
+     */
     renderSelectInput({name, value, onChange, choices}) {
         return (
             <View key={name} style={styles.inputRow}>
@@ -459,6 +544,12 @@ export default class EditComponent extends React.Component {
         );
     }
 
+    /**
+     * Render color input, when clicked it will change the state in order to display the color picker
+     *
+     * @param {object} data
+     * @return {React.Component}
+     */
     renderColorInput({value, name, onChange}) {
         const overlayTextColor = tinycolor(value).isDark() ? '#FAFAFA' : '#222';
 
@@ -477,6 +568,10 @@ export default class EditComponent extends React.Component {
         );
     }
 
+    /**
+     * Render the color picker if show be displayed
+     * @return {void|React.Component}
+     */
     renderColorPicker() {
         if (this.state.colorPicker !== null) {
             const {value, onChange} = this.state.colorPicker;
@@ -500,7 +595,7 @@ export default class EditComponent extends React.Component {
 
     render() {
         return (
-            <View style={this.style}>
+            <View style={this.props.style}>
                 {this.renderColorPicker()}
                 {this.renderForm()}
             </View>

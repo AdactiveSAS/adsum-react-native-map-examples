@@ -1,9 +1,19 @@
 import React from 'react';
 // Add new imports to display our new UI
-import {StyleSheet, WebView, Platform, View, ToolbarAndroid, Button, Text, ActionSheetIOS} from 'react-native';
+import {StyleSheet, WebView, Platform, View, ToolbarAndroid, Button, Text, ActionSheetIOS, Picker} from 'react-native';
 import {AdsumNativeMap, MOUSE_EVENTS} from '@adactive/adsum-react-native-map';
 import {EntityManager} from '@adactive/adsum-client-api';
 import EditComponent from "./components/EditComponent";
+import dataImage from "./assets/dataImage";
+import LevelOfDetailsComponent from "./components/LevelOfDetailsComponent";
+
+const MODES = {
+    edit: 'edit',
+    createText: 'createText',
+    createImage: 'createImage',
+    remove: 'remove',
+    levelOfDetails: 'levelOfDetails',
+};
 
 export default class App extends React.Component {
     /**
@@ -14,7 +24,9 @@ export default class App extends React.Component {
 
         this.state = {
             ready: false,
+            mode: MODES.edit,
             edit: false,
+            editLevelOfDetails: false,
         };
 
     }
@@ -41,17 +53,36 @@ export default class App extends React.Component {
             deviceId: 323,
         });
 
-        this.adsumRnMap.mouseManager.addEventListener(
-            MOUSE_EVENTS.click,
-            async (event) => {
-                await this.edit(await this.getClickedLabel(event.intersects));
-            }
-        );
+        this.adsumRnMap.mouseManager.addEventListener(MOUSE_EVENTS.click, this.onMapClicked.bind(this));
 
         // Start the rendering
         await this.adsumRnMap.start();
 
         this.setState({ready: true});
+    }
+
+    async onMapClicked(event) {
+        switch (this.state.mode) {
+            case MODES.edit:
+                return this.edit(await this.getClickedLabel(event.intersects));
+            case MODES.createText:
+                return this.createLabelText(event);
+            case MODES.createImage:
+                return this.createLabelImage(event);
+            case MODES.remove:
+                return this.remove(event);
+            case MODES.levelOfDetails:
+                return this.editLevelOfDetails(await this.getClickedLabel(event.intersects));
+        }
+    }
+
+    setMode(mode) {
+        if (this.state.mode === MODES.edit) {
+            // Cancel any ongoing edition
+            this.edit(null);
+        }
+
+        this.setState({ mode });
     }
 
     render() {
@@ -60,14 +91,38 @@ export default class App extends React.Component {
             <View style={styles.container}>
                 {this.renderToolbar()}
                 {this.renderWebView()}
+                {this.renderMenu()}
                 {this.renderEditLabelView()}
+                {this.renderEditLevelOfDetails()}
             </View>
+        );
+    }
+
+    renderMenu() {
+        if (this.state.edit || this.state.editLevelOfDetails) {
+            return;
+        }
+
+        return (
+            <Picker selectedValue={this.state.mode} onValueChange={(mode) => this.setMode(mode)}>
+                <Picker.Item label="Edit Label" key={MODES.edit} value={MODES.edit}/>
+                <Picker.Item label="Create Label Text" key={MODES.createText} value={MODES.createText}/>
+                <Picker.Item label="Create Label Image" key={MODES.createImage} value={MODES.createImage}/>
+                <Picker.Item label="Remove Label" key={MODES.remove} value={MODES.remove}/>
+                <Picker.Item label="Level of Details" key={MODES.levelOfDetails} value={MODES.levelOfDetails}/>
+            </Picker>
         );
     }
 
     renderEditLabelView() {
         if (this.state.edit) {
-            return (<EditComponent style={styles.menu} labelObject={this.currentLabelEdit}/>);
+            return (<EditComponent style={styles.editComponent} labelObject={this.currentLabelEdit}/>);
+        }
+    }
+
+    renderEditLevelOfDetails() {
+        if (this.state.editLevelOfDetails) {
+            return (<LevelOfDetailsComponent style={styles.editComponent} labelObject={this.currentLabelEdit}/>);
         }
     }
 
@@ -214,6 +269,71 @@ export default class App extends React.Component {
 
         return null;
     }
+
+    async createLabelText(mouseEvent) {
+        if (mouseEvent.intersects.length === 0) {
+            return;
+        }
+
+        const { object, position } = mouseEvent.intersects[0];
+
+        if (object.isSite || object.isBuilding || object.isFloor || object.isSpace) {
+            const label = await this.adsumRnMap.objectManager.createLabelTextObject({
+                text: 'Hello world !\nI am using default properties.',
+                offset: position,
+            });
+            await this.adsumRnMap.objectManager.addLabel(label, object);
+        }
+    }
+
+    async createLabelImage(mouseEvent) {
+        if (mouseEvent.intersects.length === 0) {
+            return;
+        }
+
+        const { object, position } = mouseEvent.intersects[0];
+
+        if (object.isSite || object.isBuilding || object.isFloor || object.isSpace) {
+            const label = await this.adsumRnMap.objectManager.createLabelImageObject({
+                image: dataImage,
+                offset: position,
+                width: 60,
+                height: 60,
+            });
+            await this.adsumRnMap.objectManager.addLabel(label, object);
+        }
+    }
+
+    async removeLabel(mouseEvent) {
+        if (mouseEvent.intersects.length === 0) {
+            return;
+        }
+
+        const { object } = mouseEvent.intersects[0];
+
+        if (object.isLabel) {
+            await this.adsumRnMap.objectManager.removeLabel(object);
+        } else if (object.isBuilding || object.isSpace) {
+            const labels = await object.getLabels();
+
+            await Promise.all(labels.map(label => this.adsumRnMap.objectManager.removeLabel(label)));
+        }
+    }
+
+    async editLevelOfDetails(labelObject) {
+        if (this.currentLabelEdit === labelObject) {
+            return;
+        }
+
+        if (this.currentLabelEdit !== null) {
+            await this.currentLabelEdit.unselect();
+            this.currentLabelEdit = null;
+        }
+
+        this.currentLabelEdit = labelObject;
+
+        this.setState({ editLevelOfDetails: this.currentLabelEdit !== null});
+    }
 }
 
 // Some style changes !
@@ -234,8 +354,10 @@ const styles = StyleSheet.create({
     webview: {
         flex: 1,
         justifyContent: 'center',
+        borderBottomColor: '#dddddd',
+        borderBottomWidth: 1,
     },
-    menu: {
+    editComponent: {
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#eeeeee',
