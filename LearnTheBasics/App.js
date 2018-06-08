@@ -106,7 +106,7 @@ export default class App extends React.Component {
             floors.push(null);
 
             // For each floor add the action
-            this.adsumRnMap.objectManager.floors.forEach((floor, id) => {
+            this.adsumRnMap.objectManager.floors.forEach((floor) => {
                 actions.push({title: this.floorTitles.get(floor) });
                 floors.push(floor);
             });
@@ -147,8 +147,8 @@ export default class App extends React.Component {
         const options = ['Site'];
         const floors = [null];
 
-        this.adsumRnMap.objectManager.floors.forEach((floor, id) => {
-            options.push(`Set floor: ${id}`);
+        this.adsumRnMap.objectManager.floors.forEach((floor) => {
+            options.push(this.floorTitles.get(floor));
             floors.push(floor);
         });
         options.push('Cancel');
