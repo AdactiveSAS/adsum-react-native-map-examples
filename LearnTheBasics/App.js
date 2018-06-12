@@ -159,8 +159,10 @@ export default class App extends React.Component {
                 cancelButtonIndex: options.length - 1,
             },
             (index) => {
-                const floor = floors[index];
-                this.changeFloor(floor);
+                if (index < floors.length) {
+                    const floor = floors[index];
+                    this.changeFloor(floor);
+                }
             },
         );
     }

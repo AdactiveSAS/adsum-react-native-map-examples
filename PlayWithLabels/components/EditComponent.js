@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, Text, TouchableOpacity, Switch, TextInput, ScrollView, Picker} from 'react-native';
+import {View, StyleSheet, Text, TouchableOpacity, Switch, TextInput, ScrollView, Picker, KeyboardAvoidingView} from 'react-native';
 import {LABEL_ORIENTATION_MODES} from '@adactive/adsum-react-native-map';
 import tinycolor from 'tinycolor2';
 import {SlidersColorPicker} from 'react-native-color';
@@ -21,6 +21,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
+    picker: {
+        flex: 1,
+        minHeight: 40,
+        // alignItems center is buggy on Picker IOS
+        // alignItems: 'center'
+        justifyContent: 'center'
+    }
 });
 
 /**
@@ -537,7 +544,7 @@ export default class EditComponent extends React.Component {
         return (
             <View key={name} style={styles.inputRow}>
                 <Text style={styles.label}>{name}:</Text>
-                <Picker style={styles.input} selectedValue={value} onValueChange={onChange}>
+                <Picker style={styles.picker} selectedValue={value} onValueChange={onChange}>
                     {choices.map((choice) => (<Picker.Item label={choice} key={choice} value={choice}/>))}
                 </Picker>
             </View>
@@ -595,10 +602,11 @@ export default class EditComponent extends React.Component {
 
     render() {
         return (
-            <View style={this.props.style}>
+            <KeyboardAvoidingView style={this.props.style} behavior="position" contentContainerStyle
+={{backgroundColor: "rgba(255, 255, 255, 0.3)"}} enabled>
                 {this.renderColorPicker()}
                 {this.renderForm()}
-            </View>
+            </KeyboardAvoidingView>
         );
     }
 }

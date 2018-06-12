@@ -70,7 +70,7 @@ export default class App extends React.Component {
             case MODES.createImage:
                 return this.createLabelImage(event);
             case MODES.remove:
-                return this.remove(event);
+                return this.removeLabel(event);
             case MODES.levelOfDetails:
                 return this.editLevelOfDetails(await this.getClickedLabel(event.intersects));
         }
@@ -213,8 +213,10 @@ export default class App extends React.Component {
                 cancelButtonIndex: options.length - 1,
             },
             (index) => {
-                const floor = floors[index];
-                this.changeFloor(floor);
+                if (index < floors.length) {
+                    const floor = floors[index];
+                    this.changeFloor(floor);
+                }
             },
         );
     }
