@@ -1,0 +1,29 @@
+{
+  "name": "PlayWithLabels",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "npx adsum-rn-map install:assets && node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@adactive/adsum-client-api": "^2.2.0",
+    "@adactive/adsum-react-native-map": "^5.2.0",
+    "react": "16.3.1",
+    "react-native": "0.55.4",
+    "react-native-color": "^0.0.10",
+    "react-native-fs": "^2.9.12",
+    "react-native-static-server": "^0.3.0",
+    "react-native-table-component": "^1.1.8",
+    "tinycolor2": "^1.4.1"
+  },
+  "devDependencies": {
+    "babel-jest": "23.0.1",
+    "babel-preset-react-native": "4.0.0",
+    "jest": "23.1.0",
+    "react-test-renderer": "16.3.1"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
