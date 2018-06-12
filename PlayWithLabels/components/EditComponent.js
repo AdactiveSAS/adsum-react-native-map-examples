@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, Text, TouchableOpacity, Switch, TextInput, ScrollView, Picker, KeyboardAvoidingView} from 'react-native';
+import {View, StyleSheet, Text, TouchableOpacity, Switch, TextInput, ScrollView, Picker, KeyboardAvoidingView, Platform} from 'react-native';
 import {LABEL_ORIENTATION_MODES} from '@adactive/adsum-react-native-map';
 import tinycolor from 'tinycolor2';
 import {SlidersColorPicker} from 'react-native-color';
@@ -601,12 +601,19 @@ export default class EditComponent extends React.Component {
     }
 
     render() {
-        return (
-            <KeyboardAvoidingView style={this.props.style} behavior="position" contentContainerStyle
-={{backgroundColor: "rgba(255, 255, 255, 0.3)"}} enabled>
-                {this.renderColorPicker()}
-                {this.renderForm()}
-            </KeyboardAvoidingView>
-        );
+        return Platform.select({
+            ios:(
+                <KeyboardAvoidingView style={this.props.style} behavior={behavior} contentContainerStyle={{backgroundColor: "rgba(255, 255, 255, 0.3)"}} enabled>
+                    {this.renderColorPicker()}
+                    {this.renderForm()}
+                </KeyboardAvoidingView>
+            ),
+            android: (
+                <View style={this.props.style} >
+                    {this.renderColorPicker()}
+                    {this.renderForm()}
+                </View>
+            )
+        });
     }
 }
