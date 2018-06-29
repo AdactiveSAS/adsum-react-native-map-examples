@@ -8,9 +8,11 @@
   },
   "dependencies": {
     "@adactive/adsum-client-api": "^2.0.0",
+    "@adactive/adsum-react-native-map": "^5.0.0",
     "react": "16.3.1",
     "react-native": "0.55.4",
-    "react-native-fs": "^2.10.14"
+    "react-native-fs": "^2.10.14",
+    "react-native-static-server": "^0.3.0"
   },
   "devDependencies": {
     "babel-jest": "23.2.0",
