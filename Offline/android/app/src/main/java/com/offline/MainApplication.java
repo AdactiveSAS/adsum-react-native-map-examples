@@ -1,6 +1,8 @@
 package com.offline;
 
 import android.app.Application;
+import android.os.Build;
+import android.webkit.WebView;
 
 import com.facebook.react.ReactApplication;
 import com.futurepress.staticserver.FPStaticServerPackage;
@@ -45,5 +47,10 @@ public class MainApplication extends Application implements ReactApplication {
   public void onCreate() {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
+
+    if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      // Use this in order to be able to debug the webview using ChromeDevTools
+      WebView.setWebContentsDebuggingEnabled(true);
+    }
   }
 }
