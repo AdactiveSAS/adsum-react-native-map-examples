@@ -1,3 +1,4 @@
+import config from './config.json';
 import React from 'react';
 import { StyleSheet, WebView, View, Text, ScrollView, SectionList } from 'react-native';
 import { AdsumNativeMap } from '@adactive/adsum-react-native-map';
@@ -13,17 +14,7 @@ export default class App extends React.Component {
     }
 
     componentWillMount() {
-        // Create the cacheManager
-        const cacheManager = new LocalCacheManager(`adsum-data`, true);
-
-        // Create an entityManager using the API credentials (see AdsumClientAPI documentation for more details)
-        this.entityManager = new EntityManager({
-            "endpoint": "https://api.adsum.io",
-            "site": 322,
-            "username": "323-device",
-            "key": "343169bf805f8abd5fa71a4f529594a654de6afbac70a2d867a8b458c526fb7d",
-            cacheManager,
-        });
+        this.entityManager = new EntityManager(Object.assign({cacheManager: new LocalCacheManager()}, config));
 
         // Create the Map instance
         this.adsumRnMap = new AdsumNativeMap({});
@@ -32,7 +23,6 @@ export default class App extends React.Component {
     }
 
     async start() {
-
         await this.entityManager.loadFromCache(true);
 
         this.setState({ ready: true });
