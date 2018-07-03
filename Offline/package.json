@@ -9,8 +9,8 @@
     "compile:android": "npx eslint . && npx adsum-rn-map install:assets --target=android && react-native bundle --dev false --platform android --entry-file index.js --bundle-output ./android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/"
   },
   "dependencies": {
-    "@adactive/adsum-client-api": "^2.3.0-alpha.offline.7",
-    "@adactive/adsum-react-native-map": "5.3.0-alpha.offline.3",
+    "@adactive/adsum-client-api": "^2.3.0-alpha.offline.12",
+    "@adactive/adsum-react-native-map": "^5.2.0",
     "react": "16.3.1",
     "react-native": "0.55.4",
     "react-native-fs": "^2.10.14",
