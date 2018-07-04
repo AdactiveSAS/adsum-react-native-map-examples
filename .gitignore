@@ -91,3 +91,8 @@ buck-out/
 
 # Bundle artifact
 *.jsbundle
+
+/*/android/app/src/main/assets/adsum-data/
+!/*/android/app/src/main/assets/adsum-data/.gitkeep
+/*/ios/assets/adsum-data/
+!/*/ios/assets/adsum-data/.gitkeep

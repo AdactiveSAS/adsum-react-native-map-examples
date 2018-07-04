@@ -14,9 +14,9 @@
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@adactive/adactive-logger/-/adactive-logger-1.0.3.tgz#2410f21234d89bc7d1ac185cfe79260e4a87bf42"
 
-"@adactive/adsum-client-api@^2.3.0-alpha.offline.12":
-  version "2.3.0-alpha.offline.13"
-  resolved "https://registry.yarnpkg.com/@adactive/adsum-client-api/-/adsum-client-api-2.3.0-alpha.offline.13.tgz#d966271fd69504ac4033ba0fcf00d7d9a619b757"
+"@adactive/adsum-client-api@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@adactive/adsum-client-api/-/adsum-client-api-2.3.0.tgz#8a1c4ed514748a372cba4b274d0997674c29ddfd"
   dependencies:
     "@adactive/adactive-abstract-options" "^1.0.2"
     "@adactive/adactive-logger" "^1.0.3"
@@ -25,9 +25,9 @@
     eventemitter3 "^3.0.1"
     yargs "^12.0.1"
 
-"@adactive/adsum-react-native-map@^5.2.0":
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/@adactive/adsum-react-native-map/-/adsum-react-native-map-5.2.0.tgz#733c22341331db7f3849ac4c1fecd1a0cc62e3d1"
+"@adactive/adsum-react-native-map@^5.3.0":
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/@adactive/adsum-react-native-map/-/adsum-react-native-map-5.3.0.tgz#cff0a588ba40204b53d0c67c46f87404a04566aa"
   dependencies:
     "@adactive/adactive-abstract-options" "^1.0.2"
     "@adactive/adactive-event-dispatcher" "^1.0.1"
