@@ -9,6 +9,7 @@
   "dependencies": {
     "@adactive/adsum-client-api": "^2.0.0",
     "@adactive/adsum-react-native-map": "^5.4.0-rc.1",
+    "@zsajjad/react-native-heading": "https://github.com/zsajjad/react-native-heading.git",
     "react": "16.4.1",
     "react-native": "0.56.0",
     "react-native-fs": "^2.10.14",

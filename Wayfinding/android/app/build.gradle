@@ -137,6 +137,7 @@ android {
 }
 
 dependencies {
+    compile project(':@zsajjad_react-native-heading')
     compile project(':react-native-static-server')
     compile project(':react-native-fs')
     compile fileTree(dir: "libs", include: ["*.jar"])

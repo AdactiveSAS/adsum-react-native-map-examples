@@ -1,7 +1,8 @@
 import React from 'react';
-import {StyleSheet, WebView, PermissionsAndroid, Platform} from 'react-native';
+import {StyleSheet, WebView, PermissionsAndroid, Platform, NativeEventEmitter} from 'react-native';
 import {AdsumNativeMap} from '@adactive/adsum-react-native-map';
 import {EntityManager} from '@adactive/adsum-client-api';
+import ReactNativeHeading from '@zsajjad/react-native-heading';
 
 export default class App extends React.Component {
     constructor() {
@@ -13,6 +14,7 @@ export default class App extends React.Component {
 
         this.geolocationEnabled = false;
         this.geolocationWatchId = null;
+        this.headingListener = null;
     }
 
     componentWillMount() {
@@ -76,6 +78,17 @@ export default class App extends React.Component {
             );
         }
 
+        this.headingListener = new NativeEventEmitter(ReactNativeHeading)
+        ReactNativeHeading.start(0.1).then(didStart => {
+            if (!didStart) {
+                console.warn('Cannot retrieve heading');
+            }
+        });
+
+        this.headingListener.addListener('headingUpdated', heading => {
+            this.adsumRnMap.cameraManager.move({ azimuth: heading }, false);
+        });
+
         this.setState({ready: true});
     }
 
@@ -84,6 +97,9 @@ export default class App extends React.Component {
             navigator.geolocation.clearWatch(this.geolocationWatchId);
             this.geolocationWatchId = null;
         }
+
+        ReactNativeHeading.stop();
+        this.headingListener.removeAllListeners('headingUpdated');
     }
 
     render() {

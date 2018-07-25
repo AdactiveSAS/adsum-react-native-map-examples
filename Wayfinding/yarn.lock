@@ -522,6 +522,10 @@
     lodash "^4.17.5"
     to-fast-properties "^2.0.0"
 
+"@zsajjad/react-native-heading@https://github.com/zsajjad/react-native-heading.git":
+  version "1.1.0"
+  resolved "https://github.com/zsajjad/react-native-heading.git#daa979587ef5b1f23e1ea901ff73a28ee114c35e"
+
 abab@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/abab/-/abab-1.0.4.tgz#5faad9c2c07f60dd76770f71cf025b62a63cfd4e"
