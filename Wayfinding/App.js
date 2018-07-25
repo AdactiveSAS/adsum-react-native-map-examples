@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, WebView } from 'react-native';
-import { AdsumNativeMap } from '@adactive/adsum-react-native-map';
-import { EntityManager } from '@adactive/adsum-client-api';
+import {StyleSheet, WebView, PermissionsAndroid, Platform} from 'react-native';
+import {AdsumNativeMap} from '@adactive/adsum-react-native-map';
+import {EntityManager} from '@adactive/adsum-client-api';
 
 export default class App extends React.Component {
     constructor() {
@@ -10,6 +10,9 @@ export default class App extends React.Component {
         this.state = {
             ready: false,
         };
+
+        this.geolocationEnabled = false;
+        this.geolocationWatchId = null;
     }
 
     componentWillMount() {
@@ -37,7 +40,50 @@ export default class App extends React.Component {
         // Start the rendering
         await this.adsumRnMap.start();
 
-        this.setState({ ready: true });
+        if (!this.geolocationEnabled) {
+            if (Platform.OS === 'android' && Platform.Version >= 23) {
+                try {
+                    this.geolocationEnabled = await PermissionsAndroid.request(
+                        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+                        {
+                            title: 'Enable Geolocation',
+                            message: 'Required for the project'
+                        }
+                    );
+
+                    if (this.geolocationEnabled) {
+                        console.log('Geolocation permission granted');
+                    } else {
+                        console.warn('Geolocation permission denied');
+                    }
+                } catch (err) {
+                    console.warn(err);
+                }
+            }
+        }
+
+        if (this.geolocationEnabled) {
+            this.geolocationWatchId = navigator.geolocation.watchPosition(
+                position => {
+                    // console.log(position);
+                },
+                undefined,
+                {
+                    enableHighAccuracy: true,
+                    distanceFilter: 1,
+                    useSignificantChanges: true,
+                }
+            );
+        }
+
+        this.setState({ready: true});
+    }
+
+    componentWillUnmount() {
+        if (this.geolocationWatchId !== null) {
+            navigator.geolocation.clearWatch(this.geolocationWatchId);
+            this.geolocationWatchId = null;
+        }
     }
 
     render() {
