@@ -1,8 +1,11 @@
 package com.wayfinding;
 
 import android.app.Application;
+import android.os.Build;
+import android.webkit.WebView;
 
 import com.facebook.react.ReactApplication;
+import com.oblador.vectoricons.VectorIconsPackage;
 import com.joshblour.reactnativeheading.ReactNativeHeadingPackage;
 import com.futurepress.staticserver.FPStaticServerPackage;
 import com.rnfs.RNFSPackage;
@@ -26,6 +29,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new VectorIconsPackage(),
             new ReactNativeHeadingPackage(),
             new FPStaticServerPackage(),
             new RNFSPackage()
@@ -46,6 +50,12 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
+
+    if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      // Use this in order to be able to debug the webview using ChromeDevTools
+      WebView.setWebContentsDebuggingEnabled(true);
+    }
+
     SoLoader.init(this, /* native exopackage */ false);
   }
 }
