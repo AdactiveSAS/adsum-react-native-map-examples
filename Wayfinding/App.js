@@ -21,7 +21,6 @@ import {
     DotPathSectionDrawerOptions,
     CameraCenterOnOptions,
     OrientedDotUserObjectOptions,
-    UserPositionUpdateOptions
 } from '@adactive/adsum-react-native-map';
 import {EntityManager} from '@adactive/adsum-client-api';
 import ReactNativeHeading from '@zsajjad/react-native-heading';
@@ -46,20 +45,20 @@ export default class App extends React.Component {
             compass: false,
             hasCompass: false,
             instruction: null,
-            interactive: true,
         };
-
-        this.headingListener = null;
 
         this.floorTitles = new Map();
 
         this.path = null;
+        this.space = null;
+        this.labels = new Set();
+
+        this.headingListener = null;
+
         this.pathNeedRedraw = false;
         this.currentPathSection = null;
         this.onUserCompletedPathSection = null;
         this.onUserCancel = null;
-        this.space = null;
-        this.labels = new Set();
     }
 
     componentWillMount() {
@@ -95,10 +94,6 @@ export default class App extends React.Component {
                     size: 4,
                     color: 0xff4757,
                 }),
-                userPositionUpdateOptions: new UserPositionUpdateOptions({
-                    animated: true,
-                    duration: 400,
-                }),
             }
         });
 
@@ -110,32 +105,12 @@ export default class App extends React.Component {
         await this.adsumRnMap.init({
             entityManager: this.entityManager,
             deviceId: 323,
-
-            // "deviceId": 1064
         });
 
         // Start the rendering
         await this.adsumRnMap.start();
 
-        this.headingListener = new NativeEventEmitter(ReactNativeHeading);
-        ReactNativeHeading.start(0.1).then(didStart => {
-            if (!didStart) {
-                console.warn('Cannot retrieve heading, this device doesn\'t seem to have a magnetometer.');
-            }
-
-            this.setState({ hasCompass: didStart });
-        });
-
-
-        this.headingListener.addListener('headingUpdated', heading => {
-            if (!this.state.locked && this.state.compass) {
-                this.adsumRnMap.cameraManager.move({azimuth: heading}, false);
-            }
-
-            this.setState({heading});
-            this.adsumRnMap.wayfindingManager.setUserAzimuthHeading(heading);
-        });
-
+        // Create floor name mapping
         const floors = Array.from(this.adsumRnMap.objectManager.floors.values());
         await Promise.all(
             floors.map(async (floor) => {
@@ -148,7 +123,20 @@ export default class App extends React.Component {
 
         this.setState({ready: true});
 
+        // Listen map events
         this.adsumRnMap.mouseManager.addEventListener(MOUSE_EVENTS.click, this.onMapClick.bind(this));
+
+        this.headingListener = new NativeEventEmitter(ReactNativeHeading);
+        ReactNativeHeading.start(0.1).then(didStart => {
+            if (!didStart) {
+                console.warn('Cannot retrieve heading, this device doesn\'t seem to have a magnetometer.');
+            }
+
+            this.setState({ hasCompass: didStart });
+        });
+
+        this.headingListener.addListener('headingUpdated', this.onHeadingChanged.bind(this));
+
         this.adsumRnMap.mouseManager.addEventListener(MOUSE_EVENTS.dblClick, this.onMapDblClick.bind(this));
         this.adsumRnMap.wayfindingManager.addEventListener(
             WAYFINDING_EVENTS.user.position.didChanged,
@@ -156,41 +144,20 @@ export default class App extends React.Component {
         );
     }
 
+    onHeadingChanged(heading) {
+        if (!this.state.locked && this.state.compass) {
+            // Don't animate as this method is called multiple time per seconds
+            this.adsumRnMap.cameraManager.move({azimuth: heading}, false);
+        }
+
+        this.setState({heading});
+        this.adsumRnMap.wayfindingManager.setUserAzimuthHeading(heading);
+    }
+
     componentWillUnmount() {
         ReactNativeHeading.stop();
         this.headingListener.removeAllListeners('headingUpdated');
-    }
-
-    toggleFloorsIOS() {
-        const options = ['Site'];
-        const floors = [null];
-
-        this.adsumRnMap.objectManager.floors.forEach((floor) => {
-            options.push(this.floorTitles.get(floor));
-            floors.push(floor);
-        });
-        options.push('Cancel');
-
-        ActionSheetIOS.showActionSheetWithOptions(
-            {
-                options,
-                cancelButtonIndex: options.length - 1,
-            },
-            (index) => {
-                if (index < floors.length) {
-                    const floor = floors[index];
-                    this.changeFloor(floor);
-                }
-            },
-        );
-    }
-
-    async changeFloor(floor) {
-        // First change the floor
-        await this.adsumRnMap.sceneManager.setCurrentFloor(floor);
-
-        // Don't forget to center the camera on floor !
-        await this.adsumRnMap.cameraManager.centerOnFloor(floor);
+        this.headingListener = null;
     }
 
     async onMapClick({intersects}) {
@@ -239,38 +206,11 @@ export default class App extends React.Component {
         try {
             this.setState({locked: true});
 
-            if (this.path !== null) {
-                await this.adsumRnMap.wayfindingManager.removePath(this.path);
-                this.path = null;
-            }
+            await this.removeGoToArtifacts();
 
-            if (this.space !== null) {
-                await Promise.all([
-                    this.space.resetColor(),
-                    this.space.bounceDown(),
-                    await Promise.all(
-                        Array.from(this.labels).map(labelObject => {
-                            this.labels.delete(labelObject);
-                            return labelObject.unselect()
-                        }),
-                    ),
-                ]);
-            }
+            await this.selectSpace(space);
 
-            this.space = space;
-            const labels = await this.space.getLabels();
-
-            await Promise.all([
-                this.space.setColor(0x78e08f),
-                this.space.bounceUp(3),
-                await Promise.all(
-                    Array.from(labels).map(labelObject => {
-                        this.labels.add(labelObject);
-                        return labelObject.select()
-                    }),
-                ),
-            ]);
-
+            // Center on the selected space, with a zoom
             await this.adsumRnMap.cameraManager.centerOn(space, true, {zoom: true, fitRatio: 2});
 
             await this.wait(500);
@@ -285,8 +225,10 @@ export default class App extends React.Component {
             // Compute the path to find the shortest path
             await this.adsumRnMap.wayfindingManager.computePath(this.path);
 
+            // Get path sections, including inter-ground ones
             const pathSections = this.path.getPathSections(true);
 
+            // Change floor if needed
             const isOnStartingFloor = await this.adsumRnMap.sceneManager.isCurrentFloor(pathSections[0].ground);
             if (!isOnStartingFloor) {
                 await this.adsumRnMap.sceneManager.setCurrentFloor(pathSections[0].ground);
@@ -294,42 +236,7 @@ export default class App extends React.Component {
             }
 
             for (const pathSection of pathSections) {
-                this.cancelIfNeedRedraw();
-
-                if (pathSection.isInterGround()) {
-                    await this.wait(1500);
-                    await this.adsumRnMap.sceneManager.setCurrentFloor(pathSection.getLastGround());
-
-                    continue;
-                }
-
-                await this.adsumRnMap.wayfindingManager.drawPathSection(pathSection);
-
-                this.cancelIfNeedRedraw();
-
-                // Find any attached labelObjects to the pathSection destination
-                let labelObjects = [];
-                let adsumObject = await this.adsumRnMap.objectManager.getByAdsumLocation(pathSection.to);
-                if (adsumObject !== null) {
-                    if (adsumObject.isLabel) {
-                        labelObjects = [adsumObject];
-                    } else if (adsumObject.isBuilding || adsumObject.isSpace) {
-                        labelObjects = await adsumObject.getLabels();
-                    }
-                }
-
-                // Select label objects
-                await Promise.all(
-                    labelObjects.map((labelObject) => {
-                        this.labels.add(labelObject);
-
-                        return labelObject.select();
-                    }),
-                );
-
-                this.cancelIfNeedRedraw();
-
-                await this.waitUserCompletePathSection(pathSection);
+                await this.drawPathSection(pathSection);
             }
 
             const centerOptions = {altitude: 45};
@@ -349,6 +256,88 @@ export default class App extends React.Component {
                 }
             });
         }
+    }
+
+    async drawPathSection(pathSection) {
+        // If a user is not following the path, throw CancelError
+        this.cancelIfNeedRedraw();
+
+        // If it's inter-ground path section, then floor changed is required
+        if (pathSection.isInterGround()) {
+            await this.wait(1500);
+            await this.adsumRnMap.sceneManager.setCurrentFloor(pathSection.getLastGround());
+
+            return;
+        }
+
+        await this.adsumRnMap.wayfindingManager.drawPathSection(pathSection);
+
+        // If a user is not following the path, throw CancelError
+        this.cancelIfNeedRedraw();
+
+        // Find any attached labelObjects to the pathSection destination
+        let labelObjects = [];
+        let adsumObject = await this.adsumRnMap.objectManager.getByAdsumLocation(pathSection.to);
+        if (adsumObject !== null) {
+            if (adsumObject.isLabel) {
+                labelObjects = [adsumObject];
+            } else if (adsumObject.isBuilding || adsumObject.isSpace) {
+                labelObjects = await adsumObject.getLabels();
+            }
+        }
+
+        // Select label objects
+        await Promise.all(
+            labelObjects.map((labelObject) => {
+                this.labels.add(labelObject);
+
+                return labelObject.select();
+            }),
+        );
+
+        // If a user is not following the path, throw CancelError
+        this.cancelIfNeedRedraw();
+
+        await this.waitUserCompletePathSection(pathSection);
+    }
+
+    async removeGoToArtifacts() {
+        // Remove previous path, if any
+        if (this.path !== null) {
+            await this.adsumRnMap.wayfindingManager.removePath(this.path);
+            this.path = null;
+        }
+
+        // Unselect previous space, if any
+        if (this.space !== null) {
+            await Promise.all([
+                this.space.resetColor(),
+                this.space.bounceDown(),
+                await Promise.all(
+                    Array.from(this.labels).map(labelObject => {
+                        this.labels.delete(labelObject);
+                        return labelObject.unselect()
+                    }),
+                ),
+            ]);
+        }
+    }
+
+    async selectSpace(space) {
+        this.space = space;
+        const labels = await this.space.getLabels();
+
+        // Change the color & bounce the destination space to put it in evidence
+        await Promise.all([
+            this.space.setColor(0x78e08f),
+            this.space.bounceUp(3),
+            await Promise.all(
+                Array.from(labels).map(labelObject => {
+                    this.labels.add(labelObject);
+                    return labelObject.select()
+                }),
+            ),
+        ]);
     }
 
     cancelIfNeedRedraw() {
@@ -380,6 +369,7 @@ export default class App extends React.Component {
 
         const progress = await this.adsumRnMap.wayfindingManager.getUserPathSectionProgress(this.currentPathSection);
 
+        // Does the user is still following the path section ?
         if (progress.distanceFromPathSection > 10) {
             this.pathNeedRedraw = true;
 
@@ -390,12 +380,11 @@ export default class App extends React.Component {
         }
 
         if (this.onUserCompletedPathSection === null) {
+            // We are not waiting for the path to be complete
             return;
         }
 
         const distanceToEnd = (1 - progress.progress) * this.currentPathSection.getDistance();
-
-        console.log(progress, distanceToEnd);
 
         if (distanceToEnd < 10) {
             this.onUserCompletedPathSection();
@@ -408,8 +397,8 @@ export default class App extends React.Component {
             <View style={styles.container}>
                 {this.renderToolbar()}
                 {this.renderWebView()}
-                {this.renderUserBtn()}
                 {this.renderCompass()}
+                {this.renderUserBtn()}
             </View>
         );
     }
@@ -483,6 +472,38 @@ export default class App extends React.Component {
                 {btn}
             </View>
         );
+    }
+
+    toggleFloorsIOS() {
+        const options = ['Site'];
+        const floors = [null];
+
+        this.adsumRnMap.objectManager.floors.forEach((floor) => {
+            options.push(this.floorTitles.get(floor));
+            floors.push(floor);
+        });
+        options.push('Cancel');
+
+        ActionSheetIOS.showActionSheetWithOptions(
+            {
+                options,
+                cancelButtonIndex: options.length - 1,
+            },
+            (index) => {
+                if (index < floors.length) {
+                    const floor = floors[index];
+                    this.changeFloor(floor);
+                }
+            },
+        );
+    }
+
+    async changeFloor(floor) {
+        // First change the floor
+        await this.adsumRnMap.sceneManager.setCurrentFloor(floor);
+
+        // Don't forget to center the camera on floor !
+        await this.adsumRnMap.cameraManager.centerOnFloor(floor);
     }
 
     renderUserBtn() {
