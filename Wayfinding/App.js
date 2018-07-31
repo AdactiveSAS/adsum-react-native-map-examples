@@ -516,8 +516,18 @@ export default class App extends React.Component {
                 this.setState({ locked: true });
 
                 try {
+                    const { user } = this.adsumRnMap.objectManager;
+                    const userGround = await user.getParent();
+                    const isUserOnCurrentFloor = await this.adsumRnMap.sceneManager.isCurrentFloor(
+                        userGround,
+                    );
+
+                    if (!isUserOnCurrentFloor) {
+                        await this.adsumRnMap.sceneManager.setCurrentFloor(userGround);
+                    }
+
                     await this.adsumRnMap.cameraManager.centerOn(
-                        this.adsumRnMap.objectManager.user,
+                        user,
                         true,
                         {
                             zoom: true,

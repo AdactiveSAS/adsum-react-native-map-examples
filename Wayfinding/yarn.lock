@@ -25,9 +25,9 @@
     eventemitter3 "^3.0.1"
     yargs "^12.0.1"
 
-"@adactive/adsum-react-native-map@^5.4.0":
-  version "5.4.0"
-  resolved "https://registry.yarnpkg.com/@adactive/adsum-react-native-map/-/adsum-react-native-map-5.4.0.tgz#9ae08007fd4ee8bcdfac1cafa500a6f49b423c14"
+"@adactive/adsum-react-native-map@^5.5.0-rc.1":
+  version "5.5.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@adactive/adsum-react-native-map/-/adsum-react-native-map-5.5.0-rc.1.tgz#4d11ae4ea1ec32c59bbca79a294c94c90e59f2a6"
   dependencies:
     "@adactive/adactive-abstract-options" "^1.2.0"
     "@adactive/adactive-event-dispatcher" "^1.0.1"
