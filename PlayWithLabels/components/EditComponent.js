@@ -603,7 +603,7 @@ export default class EditComponent extends React.Component {
     render() {
         return Platform.select({
             ios:(
-                <KeyboardAvoidingView style={this.props.style} behavior={behavior} contentContainerStyle={{backgroundColor: "rgba(255, 255, 255, 0.3)"}} enabled>
+                <KeyboardAvoidingView style={this.props.style} behavior="padding" contentContainerStyle={{backgroundColor: "rgba(255, 255, 255, 0.3)"}} enabled>
                     {this.renderColorPicker()}
                     {this.renderForm()}
                 </KeyboardAvoidingView>
