@@ -270,10 +270,28 @@ export default class App extends React.Component {
     // If a user is not following the path, throw CancelError
     this.cancelIfNeedRedraw();
 
-    // If it's inter-ground path section, then floor changed is required
     if (pathSection.isInterGround()) {
+      // Used to know if it's vertical (up / down) or horizontal (one building to another)
+      const isHorizontal = Math.abs(pathSection.getInclination()) < 30;
+
+      await this.adsumRnMap.wayfindingManager.drawPathSection(
+        pathSection,
+        {
+          // Delay the pattern show to display them after the camera animation
+          showDelay: 2300,
+          // Custom Camera Center on options for that call
+          centerOnOptions: {
+            // zoom: true,
+            altitude: isHorizontal ? 90 : 0,
+            // time: isHorizontal ? 1500 : 2000,
+            // fitRatio: 1.2,
+            minDistance: 100,
+          },
+        },
+      );
+
       await this.wait(1500);
-      await this.adsumRnMap.sceneManager.setCurrentFloor(pathSection.getLastGround());
+      await this.adsumRnMap.sceneManager.setCurrentFloor(pathSection.getLastGround(), true);
 
       return;
     }
@@ -305,8 +323,6 @@ export default class App extends React.Component {
 
     // If a user is not following the path, throw CancelError
     this.cancelIfNeedRedraw();
-
-    await this.waitUserCompletePathSection(pathSection);
   }
 
   async removeGoToArtifacts() {
@@ -357,16 +373,6 @@ export default class App extends React.Component {
   async wait(time) {
     return new Promise((resolve) => {
       setTimeout(resolve, time);
-    });
-  }
-
-  async waitUserCompletePathSection(pathSection) {
-    return new Promise((resolve, reject) => {
-      this.setState({instruction: 'DblClick to Move'});
-
-      this.currentPathSection = pathSection;
-      this.onUserCompletedPathSection = resolve;
-      this.onUserCancel = reject;
     });
   }
 
