@@ -1,7 +1,7 @@
 import React from 'react';
 // Add new imports to display our new UI
 import {StyleSheet, WebView, Platform, View, ToolbarAndroid, Button, Text, ActionSheetIOS, Picker} from 'react-native';
-import {AdsumNativeMap, MOUSE_EVENTS} from '@adactive/adsum-react-native-map';
+import {AdsumNativeMap, MOUSE_EVENTS, Path} from '@adactive/adsum-react-native-map';
 import {EntityManager} from '@adactive/adsum-client-api';
 import EditComponent from "./components/EditComponent";
 import dataImage from "./assets/dataImage";
@@ -13,6 +13,7 @@ const MODES = {
     createImage: 'createImage',
     remove: 'remove',
     levelOfDetails: 'levelOfDetails',
+    goTo: 'goTo',
 };
 
 export default class App extends React.Component {
@@ -71,6 +72,8 @@ export default class App extends React.Component {
                 return this.createLabelImage(event);
             case MODES.remove:
                 return this.removeLabel(event);
+            case MODES.goTo:
+                return this.goTo(event);
             case MODES.levelOfDetails:
                 return this.editLevelOfDetails(await this.getClickedLabel(event.intersects));
         }
@@ -110,6 +113,7 @@ export default class App extends React.Component {
                 <Picker.Item label="Create Label Image" key={MODES.createImage} value={MODES.createImage}/>
                 <Picker.Item label="Remove Label" key={MODES.remove} value={MODES.remove}/>
                 <Picker.Item label="Level of Details" key={MODES.levelOfDetails} value={MODES.levelOfDetails}/>
+                <Picker.Item label="Go To" key={MODES.goTo} value={MODES.goTo}/>
             </Picker>
         );
     }
@@ -320,6 +324,36 @@ export default class App extends React.Component {
 
             await Promise.all(labels.map(label => this.adsumRnMap.objectManager.removeLabel(label)));
         }
+    }
+
+    async goTo(mouseEvent) {
+      if (mouseEvent.intersects.length === 0) {
+        return;
+      }
+
+      const { object: labelObject } = mouseEvent.intersects[0];
+
+      if (!labelObject.isLabel) {
+          return;
+      }
+
+      const path = new Path(
+        null,
+        await this.adsumRnMap.wayfindingManager.locationRepository.getByAdsumObject(labelObject),
+      );
+
+      await this.adsumRnMap.wayfindingManager.computePath(path);
+
+      for (const pathSection of path.getPathSections()) {
+        if (await this.adsumRnMap.sceneManager.isCurrentFloor(pathSection.ground)) {
+          await this.adsumRnMap.sceneManager.setCurrentFloor(pathSection.ground);
+        }
+
+        await this.adsumRnMap.wayfindingManager.drawPathSection(pathSection);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      await this.adsumRnMap.wayfindingManager.removePath(path);
     }
 
     async editLevelOfDetails(labelObject) {

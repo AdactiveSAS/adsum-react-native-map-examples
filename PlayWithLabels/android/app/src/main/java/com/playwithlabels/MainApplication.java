@@ -1,6 +1,8 @@
 package com.playwithlabels;
 
 import android.app.Application;
+import android.os.Build;
+import android.webkit.WebView;
 
 import com.facebook.react.ReactApplication;
 import com.futurepress.staticserver.FPStaticServerPackage;
@@ -44,6 +46,12 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
+
+    if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      // Use this in order to be able to debug the webview using ChromeDevTools
+      WebView.setWebContentsDebuggingEnabled(true);
+    }
+
     SoLoader.init(this, /* native exopackage */ false);
   }
 }
