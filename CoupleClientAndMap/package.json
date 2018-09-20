@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@adactive/adsum-client-api": "^2.0.0",
-    "@adactive/adsum-react-native-map": "^5.6.0-rc.2",
+    "@adactive/adsum-react-native-map": "^5.7.0-rc.1",
     "react": "16.3.1",
     "react-native": "0.55.4",
     "react-native-fs": "^2.9.12",
